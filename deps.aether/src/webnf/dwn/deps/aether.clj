@@ -240,10 +240,12 @@
                        (aether-config :include-optionals false
                                       :include-scopes #{"compile"}
                                       :overlay (edn/read-string overlay-str)
-                                      :repositories
-                                      (into {}
-                                            (for [r (edn/read-string repos-str)]
-                                              [(str (gensym "repo")) r]))))]
+                                      :repositories (into {}
+                                                          (for [r (edn/read-string repos-str)]
+                                                            (if (string? r)
+                                                              [(str (gensym "repo")) r]
+                                                              r)))
+                                      ))]
     (with-open [o (io/writer repo-out-file)]
       (binding [*out* o]
         (pprint* repo)))
