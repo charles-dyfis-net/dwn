@@ -1,8 +1,9 @@
 (defproject webnf/dwn "0-SNAPSHOT"
   :java-source-paths [ "src/jvm" ]
-  :source-paths [ "src/clj" "deps.aether/src" "deps.expander/src" "nix.aether/src" "nix.data/src" ]
+  :source-paths [ "src/clj" "deps.aether/src" "deps.expander/src" "nix.aether/src" "nix.data/src" "lein.reader/src" ]
   :dependencies
   [[org.clojure/clojure "1.9.0-beta2"]
+   [leiningen "2.8.1"]
    [org.clojure/test.check "0.9.0"]
    [org.clojure/tools.logging "0.3.1"]
    [com.stuartsierra/component "0.3.2"]

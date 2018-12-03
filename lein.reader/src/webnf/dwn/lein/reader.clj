@@ -86,30 +86,32 @@
         (map (fn [main]))
         (:main prj)))
 
+(defn main [project-clj base-dir op]
+  (assert (.isFile (io/file (str project-clj))) (pr-str project-clj))
+  (assert (= "pr-deps" op) (pr-str op))
+  (-> (prj/read-raw project-clj)
+      (assoc :root (io/file base-dir))
+      (prj/project-with-profiles)
+      (prj/init-profiles [:base :system :user :provided :dev])
+      (as-> #__ prj
+        (-> {}
+            (select-coords prj :dependencies :plugins)
+            (select-paths prj :source-paths :resource-paths :java-source-paths)
+            (assoc :aot (mapv name (:aot prj)))
+            (assoc
+             :group      (:group prj)
+             :name       (:name prj)
+             :version    (:version prj)
+             :mavenRepos (into {} (map (fn [[name {:keys [url]}]] [name url]) (:repositories prj))))
+            (cond-> (:main prj) (assoc :mainNs {:main (str (:main prj))}))))
+      (rename-keys
+       :source-paths      :cljSourceDirs
+       :resource-paths    :resourceDirs
+       :java-source-paths :javaSourceDirs)
+      nix-data/nixprn))
+
 (defn -main [& args']
   (let [[project-clj base-dir op & args] args']
-    ;; (apply println "Hello, got" args)
-    (assert (.isFile (io/file (str project-clj))) (pr-str project-clj))
-    (assert (= "pr-deps" op) (pr-str op))
     (assert (= nil args) (pr-str args))
-    (-> (prj/read-raw project-clj)
-        (assoc :root (io/file base-dir))
-        (prj/project-with-profiles)
-        (prj/init-profiles [:base :system :user :provided :dev])
-        (as-> #__ prj
-          (-> {}
-              (select-coords prj :dependencies :plugins)
-              (select-paths prj :source-paths :resource-paths :java-source-paths)
-              (assoc :aot (mapv name (:aot prj)))
-              (assoc
-               :group   (:group prj)
-               :name    (:name prj)
-               :version (:version prj))
-              (cond-> (:main prj) (assoc :mainNs {:main (str (:main prj))}))))
-        (rename-keys
-         :source-paths      :cljSourceDirs
-         :resource-paths    :resourceDirs
-         :java-source-paths :javaSourceDirs)
-        ;; pp/pprint
-        nix-data/nixprn))
+    (main project-clj base-dir op))
   (System/exit 0))
